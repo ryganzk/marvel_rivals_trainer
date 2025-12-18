@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=1 NEXT_WEBPACK_USEPOLLING=1 next dev --hostname 0.0.0.0",
-    "dev:local": "cross-env WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=1 NEXT_WEBPACK_USEPOLLING=1 next dev",
+    "dev:local": "cross-env WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=1 NEXT_WEBPACK_USEPOLLING=1 next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

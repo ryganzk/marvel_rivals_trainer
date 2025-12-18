@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const API_KEY = process.env.MARVEL_RIVALS_API_KEY;
-  const ENDPOINT = 'https://marvelrivalsapi.com/api/v1/heroes';
+  const API_VERSION = process.env.MARVEL_RIVALS_API_VERSION || 'v1';
+  const ENDPOINT = `https://marvelrivalsapi.com/api/${API_VERSION}/heroes`;
 
   if (!API_KEY) {
     return NextResponse.json({ error: 'API Key is missing' }, { status: 500 });

@@ -6,12 +6,13 @@ export async function GET(
   { params }: { params: Promise<{ player: string }> }
 ) {
   const API_KEY = process.env.MARVEL_RIVALS_API_KEY;
+  const API_VERSION = process.env.MARVEL_RIVALS_API_VERSION || "v1";
   
   // 2. Await the params before using them
   const resolvedParams = await params;
   const username = resolvedParams.player;
 
-  const ENDPOINT = `https://marvelrivalsapi.com/api/v1/player/${username}`;
+  const ENDPOINT = `https://marvelrivalsapi.com/api/${API_VERSION}/player/${username}`;
 
   if (!API_KEY) {
     return NextResponse.json({ error: 'API Key is missing' }, { status: 500 });

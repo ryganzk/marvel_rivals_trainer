@@ -119,11 +119,28 @@ app/
 
 ```dotenv
 MARVEL_RIVALS_API_KEY=your_api_key_here
+MARVEL_RIVALS_API_VERSION=v1
 # OPTIONAL: HMR/network tweaks
 # NEXT_PUBLIC_VERCEL_URL=localhost:3000
 WATCHPACK_POLLING=true
 CHOKIDAR_USEPOLLING=1
 ```
+
+## Docker + Nginx
+
+Build and run the app behind nginx (serving on port 80 in the container):
+
+```bash
+# Build the image
+docker build -t marvel-rivals-dashboard .
+
+# Run with your env file
+docker run -p 8080:80 --env-file .env marvel-rivals-dashboard
+```
+
+Then open http://localhost:8080
+
+The image runs Next.js (port 3000) and proxies through nginx (port 80). To change the external port, adjust the `-p` mapping. Add or override env vars (e.g., `MARVEL_RIVALS_API_VERSION=v2`) with `-e` flags or your env file.
 
 ## API Endpoints
 

@@ -5,11 +5,12 @@ export async function GET(
   { params }: { params: Promise<{ player: string }> } // Fix type
 ) {
   const API_KEY = process.env.MARVEL_RIVALS_API_KEY;
+  const API_VERSION = process.env.MARVEL_RIVALS_API_VERSION || "v1";
   
   const resolvedParams = await params; // Fix await
   const username = resolvedParams.player;
   
-  const ENDPOINT = `https://marvelrivalsapi.com/api/v1/player/${username}/match-history`;
+  const ENDPOINT = `https://marvelrivalsapi.com/api/${API_VERSION}/player/${username}/match-history`;
 
   // ... rest of your code remains the same ...
   if (!API_KEY) return NextResponse.json({ error: 'Key missing' }, { status: 500 });
