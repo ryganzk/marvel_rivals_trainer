@@ -166,102 +166,125 @@ export default function PlayerPage() {
   const teamName = playerData?.player?.team?.club_team_mini_name || "No Team";
   const heroes = (useRanked ? playerData?.heroes_ranked : playerData?.heroes_unranked) || [];
 
+  // Determine API version and banner source
+  const apiVersion = process.env.MARVEL_RIVALS_API_VERSION || "v1";
+  const bannerPath = playerData?.player?.icon?.banner as string | undefined;
+  const bannerUrl = apiVersion === "v2" && bannerPath
+    ? bannerPath.startsWith("http")
+      ? bannerPath
+      : `https://marvelrivalsapi.com/rivals${bannerPath}`
+    : "/images/banners/default_banner.jpg";
+
   return (
     <>
       <LoadingScreen isVisible={!playerData} />
       <main className="min-h-screen bg-gray-900 text-white">
-        {/* Banner section with green background */}
-        <div className="relative bg-green-900 overflow-hidden">
-          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10 sm:py-12 relative z-10">
+        {/* Banner section with background image and divider overlay */}
+        <div className="relative overflow-hidden" style={{ minHeight: '350px' }}>
+          {/* Banner image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${bannerUrl})` }}
+          >
+            {/* Fallback color if image fails to load */}
+            <div className="absolute inset-0 bg-green-900" style={{ zIndex: -1 }}></div>
+          </div>
+          
+          {/* Banner content */}
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-16 sm:py-20 relative z-10">
             {/* Banner content will go here */}
           </div>
-        </div>
 
-        {/* Divider section */}
-        <div className="relative w-full overflow-hidden" style={{ height: '180px' }}>
-          <svg
-            className="absolute top-0 left-0 w-full h-full"
-            viewBox="0 0 1200 180"
-            preserveAspectRatio="none"
-            xmlns="http://www.w3.org/2000/svg"
-          style={{ display: 'block' }}
-        >
-          {/* Fill the area above the divider with banner color */}
-          <path
-            d="M0,0 L1200,0 L1200,10 L380,70 L400,20 L0,120 Z"
-            fill="#14532d"
-          />
-          {/* Fill the area below the divider with page background color */}
-          <path
-            d="M0,120 L400,20 L380,70 L1200,10 L1200,180 L0,180 Z"
-            fill="#111827"
-          />
-          {/* Three-line divider in page color */}
-          <line
-            x1="0"
-            y1="120"
-            x2="400"
-            y2="20"
-            stroke="#111827"
-            strokeWidth="3"
-          />
-          <line
-            x1="400"
-            y1="20"
-            x2="380"
-            y2="70"
-            stroke="#111827"
-            strokeWidth="3"
-          />
-          <line
-            x1="380"
-            y1="70"
-            x2="1200"
-            y2="10"
-            stroke="#111827"
-            strokeWidth="3"
-          />
-        </svg>
-      </div>
-
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 relative pt-6">
-        <div className="flex justify-end mb-6">
-          <div className="text-right flex flex-col items-end gap-3">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-wide text-white break-all">{displayName}</h1>
-            <div className="flex items-center gap-3">
-              {rankUrl && (
-                <img
-                  src={rankUrl}
-                  alt={`${rankName} badge`}
-                  className="h-10 w-10 object-contain"
-                  loading="lazy"
-                />
-              )}
-              <span className="text-lg font-semibold text-white">{rankName}</span>
-            </div>
-            <p className="text-sm text-gray-300">{teamName}</p>
-            <button
-              onClick={handleUpdate}
-              disabled={updateDisabled}
-              className="px-4 py-2 text-xs bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-700 rounded-md font-semibold transition-all border border-cyan-400"
+          {/* Divider SVG overlay at bottom of banner */}
+          <div className="absolute bottom-0 left-0 w-full" style={{ height: '280px', marginBottom: '-1px' }}>
+            <svg
+              className="absolute bottom-0 left-0 w-full h-full"
+              viewBox="0 0 1200 280"
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ display: 'block' }}
             >
-              {updateLoading ? "Updating..." : updateDisabled ? "Update Locked" : "Update Player"}
-            </button>
-            {(remainingMs > 0 || updateMessage) && (
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-xs text-gray-300">
-                  {remainingMs > 0 ? `Update in ${formatRemaining(remainingMs)}` : "Update available now"}
-                </span>
-                {updateMessage && (
-                  <span className="text-xs text-amber-200">{updateMessage}</span>
+              {/* Fill the area below the divider with page background color */}
+              <path
+                d="M0,120 L400,20 L380,70 L1200,10 L1200,280 L0,280 Z"
+                fill="#111827"
+              />
+              {/* Three-line divider in page color */}
+              <line
+                x1="0"
+                y1="120"
+                x2="400"
+                y2="20"
+                stroke="#111827"
+                strokeWidth="3"
+              />
+              <line
+                x1="400"
+                y1="20"
+                x2="380"
+                y2="70"
+                stroke="#111827"
+                strokeWidth="3"
+              />
+              <line
+                x1="380"
+                y1="70"
+                x2="1200"
+                y2="10"
+                stroke="#111827"
+                strokeWidth="3"
+              />
+            </svg>
+          </div>
+
+          {/* Player info at bottom of banner */}
+          <div className="absolute bottom-0 right-0 p-6 z-20">
+            <div className="text-right flex flex-col items-end gap-3">
+              <div className="flex items-center gap-4">
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-wide text-white break-all">{displayName}</h1>
+                {iconUrl && (
+                  <img
+                    src={iconUrl}
+                    alt={`${displayName} player icon`}
+                    className="h-16 w-16 object-contain"
+                    loading="lazy"
+                  />
                 )}
               </div>
-            )}
+              <div className="flex items-center gap-3">
+                {rankUrl && (
+                  <img
+                    src={rankUrl}
+                    alt={`${rankName} badge`}
+                    className="h-10 w-10 object-contain"
+                    loading="lazy"
+                  />
+                )}
+                <span className="text-lg font-semibold text-white">{rankName}</span>
+              </div>
+              <p className="text-sm text-gray-300">{teamName}</p>
+              <button
+                onClick={handleUpdate}
+                disabled={updateDisabled}
+                className="px-4 py-2 text-xs bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-700 rounded-md font-semibold transition-all border border-cyan-400"
+              >
+                {updateLoading ? "Updating..." : updateDisabled ? "Update Locked" : "Update Player"}
+              </button>
+              {(remainingMs > 0 || updateMessage) && (
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-xs text-gray-300">
+                    {remainingMs > 0 ? `Update in ${formatRemaining(remainingMs)}` : "Update available now"}
+                  </span>
+                  {updateMessage && (
+                    <span className="text-xs text-amber-200">{updateMessage}</span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 pb-12">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 pb-12 pt-6">
         {loading && <p className="text-sm text-gray-300">Loading player data...</p>}
         {error && <p className="text-sm text-rose-300">{error}</p>}
 
