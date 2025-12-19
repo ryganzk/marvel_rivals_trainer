@@ -1,6 +1,7 @@
 "use client";
 
 import { PieSlice } from './pieChartUtils';
+import { useMemo } from 'react';
 
 interface PieChartProps {
   title: string;
@@ -11,6 +12,33 @@ interface PieChartProps {
   onSliceClick?: (label: string) => void;
 }
 
+const pieAnimationStyles = `
+  @keyframes pieSliceFill {
+    from {
+      transform: scale(0);
+      opacity: 0;
+      transform-origin: 100px 100px;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+      transform-origin: 100px 100px;
+    }
+  }
+  
+  .pie-slice {
+    animation: pieSliceFill 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: 100px 100px;
+  }
+`;
+
+// Add styles to the document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = pieAnimationStyles;
+  document.head.appendChild(style);
+}
+
 export default function PieChart({
   title,
   slices,
@@ -19,6 +47,10 @@ export default function PieChart({
   selectedLabel,
   onSliceClick,
 }: PieChartProps) {
+  // Generate a key based on slices data to trigger re-animation when data changes
+  const chartKey = useMemo(() => {
+    return slices.map(s => s.label + s.count).join('|');
+  }, [slices]);
   if (slices.length === 0) {
     return (
       <div className="w-full p-4 bg-gray-800 border border-gray-700 rounded-md">
@@ -35,18 +67,23 @@ export default function PieChart({
       <div className="flex flex-col md:flex-row items-start gap-8">
         {/* Pie Chart */}
         <div className="flex-shrink-0">
-          <svg width="200" height="200" viewBox="0 0 200 200">
-            {slices.map((slice, index) => (
-              <path
-                key={index}
-                d={slice.path}
-                fill={slice.color}
-                stroke="white"
-                strokeWidth="2"
-                className={`transition-opacity ${onSliceClick ? 'cursor-pointer' : ''} ${selectedLabel && slice.label !== selectedLabel ? 'opacity-40' : 'hover:opacity-80'}`}
-                onClick={onSliceClick ? () => onSliceClick(slice.label) : undefined}
-              />
-            ))}
+          <svg key={chartKey} width="200" height="200" viewBox="0 0 200 200">
+            {slices.map((slice, index) => {
+              return (
+                <path
+                  key={index}
+                  d={slice.path}
+                  fill={slice.color}
+                  stroke="white"
+                  strokeWidth="2"
+                  className={`pie-slice ${onSliceClick ? 'cursor-pointer' : ''} ${selectedLabel && slice.label !== selectedLabel ? 'opacity-40' : 'hover:opacity-100'}`}
+                  style={{ 
+                    animationDelay: `${index * 0.08}s`
+                  }}
+                  onClick={onSliceClick ? () => onSliceClick(slice.label) : undefined}
+                />
+              );
+            })}
           </svg>
         </div>
 
