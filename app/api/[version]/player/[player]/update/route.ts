@@ -2,17 +2,16 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ version: string; player: string }> } // Add version param
+  { params }: { params: Promise<{ version: string; player: string }> }
 ) {
   const API_KEY = process.env.MARVEL_RIVALS_API_KEY;
   const API_VERSION = process.env.MARVEL_RIVALS_API_VERSION || "v1";
 
-  const resolvedParams = await params; // Fix await
-  const { version, player: username } = resolvedParams;
+  const resolvedParams = await params;
+  const { player: username } = resolvedParams;
 
   const ENDPOINT = `https://marvelrivalsapi.com/api/${API_VERSION}/player/${username}/update`;
 
-  // ... rest of your code remains the same ...
   if (!API_KEY) return NextResponse.json({ error: 'Key missing' }, { status: 500 });
 
   try {

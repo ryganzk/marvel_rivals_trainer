@@ -29,8 +29,9 @@ export default function Home() {
     setFeedback(null); // Clear previous results
     
     try {
-      // We call our new local API route: /api/player/[username]
-      const response = await fetch(`/api/player/${trimmedUsername}`);
+      // We call our new local API route: /api/[version]/player/[username]
+      const apiVersion = process.env.NEXT_PUBLIC_MARVEL_RIVALS_API_VERSION || "v1";
+      const response = await fetch(`/api/${apiVersion}/player/${trimmedUsername}`);
       const result = await response.json();
 
       if (!response.ok) {

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  // Update to accept version parameter
   { params }: { params: Promise<{ version: string; player: string }> }
 ) {
   const API_KEY = process.env.MARVEL_RIVALS_API_KEY;
@@ -10,7 +9,7 @@ export async function GET(
   
   // Await the params before using them
   const resolvedParams = await params;
-  const { version, player: username } = resolvedParams;
+  const { player: username } = resolvedParams;
 
   const ENDPOINT = `https://marvelrivalsapi.com/api/${API_VERSION}/player/${username}`;
 

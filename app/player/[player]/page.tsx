@@ -32,6 +32,7 @@ export default function PlayerPage() {
   const [nextUpdateAt, setNextUpdateAt] = useState<number | null>(null);
   const [clock, setClock] = useState(Date.now());
   const [selectedRole, setSelectedRole] = useState<'Vanguard' | 'Duelist' | 'Strategist' | null>(null);
+  const [selectedHero, setSelectedHero] = useState<string | null>(null);
   const [useRanked, setUseRanked] = useState<boolean>(false);
 
   // Tick a local clock for the countdown text.
@@ -87,13 +88,15 @@ export default function PlayerPage() {
     }
   }, [clock, nextUpdateAt, username]);
 
+  const apiVersion = process.env.NEXT_PUBLIC_MARVEL_RIVALS_API_VERSION || "v1";
+
   const fetchPlayerData = async () => {
     if (!username) return;
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch(`/api/player/${username}`);
+      const res = await fetch(`/api/${apiVersion}/player/${username}`);
       const result = await res.json();
 
       if (!res.ok) {
@@ -122,7 +125,7 @@ export default function PlayerPage() {
     setUpdateMessage(null);
 
     try {
-      const res = await fetch(`/api/player/${username}/update`);
+      const res = await fetch(`/api/${apiVersion}/player/${username}/update`);
       const result = await res.json();
 
       if (!res.ok) {
@@ -166,8 +169,85 @@ export default function PlayerPage() {
   const teamName = playerData?.player?.team?.club_team_mini_name || "No Team";
   const heroes = (useRanked ? playerData?.heroes_ranked : playerData?.heroes_unranked) || [];
 
-  // Determine API version and banner source
-  const apiVersion = process.env.MARVEL_RIVALS_API_VERSION || "v1";
+  // Calculate KDA based on filters
+  const calculateKDA = () => {
+    let filteredHeroes = heroes;
+
+    // Filter by selected hero
+    if (selectedHero) {
+      filteredHeroes = filteredHeroes.filter(
+        (h: any) => h.hero_name?.toLowerCase() === selectedHero.toLowerCase()
+      );
+    }
+    // Additionally filter by selected role (cumulative)
+    if (selectedRole) {
+      const { HERO_ROLES } = require('@/app/components/heroRoles');
+      filteredHeroes = filteredHeroes.filter(
+        (h: any) => HERO_ROLES[h.hero_name?.toLowerCase()] === selectedRole
+      );
+    }
+
+    if (filteredHeroes.length === 0) {
+      return { kda: 0, kills: 0, deaths: 0, assists: 0, matches: 0, wins: 0, mvp: 0, svp: 0, playTimeSeconds: 0 };
+    }
+
+    let totalKills = 0;
+    let totalDeaths = 0;
+    let totalAssists = 0;
+    let totalMatches = 0;
+    let totalWins = 0;
+    let totalPlayTime = 0;
+    let totalMvp = 0;
+    let totalSvp = 0;
+
+    filteredHeroes.forEach((hero: any) => {
+      const kills = Number(hero.kills) || 0;
+      const deaths = Number(hero.deaths) || 0;
+      const assists = Number(hero.assists) || 0;
+      const matches = Number(hero.matches) || 0;
+      const wins = Number(hero.wins) || 0;
+      const playTime = Number(hero.play_time) || 0;
+      const mvp = Number(hero.mvp) || 0;
+      const svp = Number(hero.svp) || 0;
+
+      totalKills += kills;
+      totalDeaths += deaths;
+      totalAssists += assists;
+      totalMatches += matches;
+      totalWins += wins;
+      totalPlayTime += playTime;
+      totalMvp += mvp;
+      totalSvp += svp;
+    });
+
+    const avgKills = totalMatches > 0 ? totalKills / totalMatches : 0;
+    const avgDeaths = totalMatches > 0 ? totalDeaths / totalMatches : 0;
+    const avgAssists = totalMatches > 0 ? totalAssists / totalMatches : 0;
+    const kda = avgDeaths > 0 ? (avgKills + avgAssists) / avgDeaths : avgKills + avgAssists;
+
+    return {
+      kda: kda,
+      kills: avgKills,
+      deaths: avgDeaths,
+      assists: avgAssists,
+      matches: totalMatches,
+      wins: totalWins,
+      playTimeSeconds: totalPlayTime,
+      mvp: totalMvp,
+      svp: totalSvp,
+    };
+  };
+
+  const kdaStats = calculateKDA();
+  
+  // Format play time from seconds to minutes:seconds
+  const formatPlayTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Determine banner source
   const bannerPath = playerData?.player?.icon?.banner as string | undefined;
   const bannerUrl = apiVersion === "v2" && bannerPath
     ? bannerPath.startsWith("http")
@@ -290,16 +370,98 @@ export default function PlayerPage() {
 
         {!loading && !error && playerData && (
           <>
+            {/* KDA Display */}
+            <div className="mb-6 p-6 bg-gray-800 border border-gray-700 rounded-md relative">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                <div className="text-center">
+                  <h3 className="text-sm text-gray-400 mb-1">KDA Ratio</h3>
+                  <p className="text-4xl font-bold text-cyan-400">
+                    {kdaStats.kda.toFixed(2)}
+                  </p>
+                </div>
+                <div className="hidden sm:block w-px h-12 bg-gray-600"></div>
+                <div className="text-center">
+                  <h3 className="text-sm text-gray-400 mb-1">Average K/D/A</h3>
+                  <p className="text-2xl font-semibold text-white">
+                    {kdaStats.kills.toFixed(1)} / {kdaStats.deaths.toFixed(1)} / {kdaStats.assists.toFixed(1)}
+                  </p>
+                </div>
+                <div className="hidden sm:block w-px h-12 bg-gray-600"></div>
+                <div className="text-center">
+                  <h3 className="text-sm text-gray-400 mb-1">Wins / Matches</h3>
+                  <p className="text-2xl font-semibold text-white">
+                    {kdaStats.wins} / {kdaStats.matches}
+                  </p>
+                </div>
+                <div className="hidden sm:block w-px h-12 bg-gray-600"></div>
+                <div className="text-center">
+                  <h3 className="text-sm text-gray-400 mb-1">MVP : SVP</h3>
+                  <p className="text-2xl font-semibold text-white">
+                    {kdaStats.mvp} : {kdaStats.svp}
+                  </p>
+                </div>
+                <div className="hidden sm:block w-px h-12 bg-gray-600"></div>
+                <div className="text-center">
+                  <h3 className="text-sm text-gray-400 mb-1">Play Time</h3>
+                  <p className="text-2xl font-semibold text-white">
+                    {formatPlayTime(kdaStats.playTimeSeconds)}
+                  </p>
+                </div>
+              </div>
+              {(selectedRole || selectedHero) && (
+                <div className="absolute top-4 right-4">
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-xs text-gray-400 flex flex-wrap items-center gap-2">
+                      <span>Filtered by:</span>
+                      {selectedRole && (
+                        <span className="text-purple-400 font-medium">Role: {selectedRole}</span>
+                      )}
+                      {selectedHero && (
+                        <span className="text-purple-400 font-medium">Hero: {selectedHero}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedHero(null);
+                        setSelectedRole(null);
+                      }}
+                      className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-cyan-400 hover:text-cyan-300 rounded border border-gray-600 hover:border-cyan-500 transition-all"
+                    >
+                      Clear Filter
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 min-w-[260px]">
                 <HeroRolePieChart
                   heroes={heroes}
                   selectedRole={selectedRole}
-                  onSelectRole={setSelectedRole}
+                  onSelectRole={(role) => {
+                    // Set role; if selected hero doesn't match new role, clear hero filter
+                    setSelectedRole(role);
+                    if (role && selectedHero) {
+                      const { HERO_ROLES } = require('@/app/components/heroRoles');
+                      const heroRole = HERO_ROLES[selectedHero.toLowerCase()];
+                      if (heroRole && heroRole !== role) {
+                        setSelectedHero(null);
+                      }
+                    }
+                  }}
                 />
               </div>
               <div className="flex-1 min-w-[260px]">
-                <HeroPlayedPieChart heroes={heroes} filterRole={selectedRole} />
+                <HeroPlayedPieChart
+                  heroes={heroes}
+                  filterRole={selectedRole}
+                  selectedHero={selectedHero}
+                  onSelectHero={(hero) => {
+                    // Do not clear role selection; filters are cumulative
+                    setSelectedHero(hero);
+                  }}
+                />
               </div>
             </div>
 

@@ -8,9 +8,11 @@ interface HeroSummary { hero_name: string; matches: number }
 interface HeroPlayedPieChartProps {
   heroes: HeroSummary[];
   filterRole?: 'Vanguard' | 'Duelist' | 'Strategist' | null;
+  selectedHero?: string | null;
+  onSelectHero?: (hero: string | null) => void;
 }
 
-export default function HeroPlayedPieChart({ heroes, filterRole = null }: HeroPlayedPieChartProps) {
+export default function HeroPlayedPieChart({ heroes, filterRole = null, selectedHero = null, onSelectHero }: HeroPlayedPieChartProps) {
   // Count occurrences of each hero
   const heroCounts: Record<string, number> = {};
 
@@ -54,5 +56,15 @@ export default function HeroPlayedPieChart({ heroes, filterRole = null }: HeroPl
     return slice;
   });
 
-  return <PieChart title="Heroes Played" slices={slices} total={total} legendLayout="grid" />;
+  const handleSliceClick = (heroLabel: string) => {
+    if (!onSelectHero) return;
+    // Toggle: clicking again clears selection
+    if (selectedHero === heroLabel) {
+      onSelectHero(null);
+    } else {
+      onSelectHero(heroLabel);
+    }
+  };
+
+  return <PieChart title="Heroes Played" slices={slices} total={total} legendLayout="grid" selectedLabel={selectedHero || undefined} onSliceClick={handleSliceClick} />;
 }
